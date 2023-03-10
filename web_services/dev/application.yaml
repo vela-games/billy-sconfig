@@ -1,0 +1,65 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  annotations:
+    notifications.argoproj.io/subscribe.slack: nt_argocd_testing
+  creationTimestamp: null
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+  name: sconfig-dev-eu-west-1-dev-core-projectv-01
+  namespace: argocd
+spec:
+  destination:
+    name: eu-west-1-dev-core-projectv-01
+    namespace: sconfig
+  project: billy
+  source:
+    chart: sconfig
+    helm:
+      releaseName: sconfig-dev
+      values: |
+        image:
+            awsAccountId: "361594066406"
+            prefix: vela-games/sconfig
+            pullPolicy: Always
+            region: eu-west-1
+            tag: latest
+        ingress:
+            annotations:
+                alb.ingress.kubernetes.io/actions.ssl-redirect: '{"Type": "redirect", "RedirectConfig":{ "Protocol": "HTTPS", "Port": "443", "StatusCode": "HTTP_301"}}'
+                alb.ingress.kubernetes.io/scheme: internet-facing
+                alb.ingress.kubernetes.io/ssl-redirect: "443"
+                alb.ingress.kubernetes.io/target-type: ip
+            enabled: true
+            host: sconfig.dev.velagames.org
+        ingressInternal:
+            annotations:
+                alb.ingress.kubernetes.io/actions.ssl-redirect: '{"Type": "redirect", "RedirectConfig":{ "Protocol": "HTTPS", "Port": "443", "StatusCode": "HTTP_301"}}'
+                alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:eu-west-1:361594066406:certificate/7a99d24c-f6a8-45fe-b7bd-905c78296a05
+                alb.ingress.kubernetes.io/scheme: internal
+                alb.ingress.kubernetes.io/ssl-redirect: "443"
+                alb.ingress.kubernetes.io/target-type: ip
+            enabled: false
+            host: sconfig-dev.eu-west-1.dev.velagames.net
+    repoURL: https://chartmuseum.infraservices.velagames.net
+    targetRevision: 0.0.3
+  syncPolicy:
+    automated: {}
+    retry:
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+      limit: 5
+    syncOptions:
+    - PrunePropagationPolicy=background
+    - CreateNamespace=true
+status:
+  health: {}
+  summary: {}
+  sync:
+    comparedTo:
+      destination: {}
+      source:
+        repoURL: ""
+    status: ""
